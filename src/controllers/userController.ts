@@ -13,9 +13,6 @@ export class UserController {
 
       const { name } = req.body;
 
-
-
-
       // basic validation
       if (!name) {
            return res.status(400).json({
