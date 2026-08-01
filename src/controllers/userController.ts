@@ -3,14 +3,11 @@ import { AppDataSource } from "../database";
 import { User } from "../models/User";
 
 
-
-const userRepository = AppDataSource.getRepository(User);
-
 export class UserController {
 
   static async createUser(req: Request, res: Response) {
     try {
-
+        const userRepository = AppDataSource.getRepository(User);
       const { name } = req.body;
 
       // basic validation
