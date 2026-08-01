@@ -21,6 +21,7 @@ export class ParkingSpotController {
           reservation.parking_spot_id = parking_spot.id
           AND reservation.status = :status
           AND reservation.start_time <= :now
+          AND reservation.end_time >= :now
           `,
         )
         .where("reservation.id IS NULL")
