@@ -114,7 +114,30 @@ export class ReservationController {
   }
 
 
+  static async getUserReservations(req: Request, res: Response) {
+    try {
+      const { userId } = req.params;
 
+      const reservations = await ReservationRepository.find({
+        where: {
+          user_id: Number(userId),
+        },
+        relations: {
+          parkingSpot: true,
+        },
+        order: {
+          start_time: "DESC",
+        },
+      });
+
+      return res.status(200).json(reservations);
+    } catch (error) {
+      return res.status(500).json({
+        message: "Failed to fetch user reservations",
+        error,
+      });
+    }
+  }
 
 
 
