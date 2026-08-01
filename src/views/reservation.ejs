@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Reservation</title>
+    <title>Reservation</title>
 </head>
 
 <body>
@@ -10,49 +10,54 @@
 
 <div id="content">
 
-<form id="reservationForm">
+    <form id="reservationForm">
 
-<label>Parking Spot</label>
+        <label>Parking Spot</label>
+        <select id="parking_spot_id" required>
+            <option value="">Loading spots...</option>
+        </select>
 
-<select id="parking_spot_id" required>
-    <option value="">Loading spots...</option>
-</select>
+        <br><br>
 
+        <label>Start</label>
+        <input
+            type="datetime-local"
+            id="start_time"
+            required
+        >
 
-<label>Start</label>
+        <br><br>
 
-<input
-type="datetime-local"
-id="start_time"
-required
->
+        <label>End</label>
+        <input
+            type="datetime-local"
+            id="end_time"
+            required
+        >
 
+        <br><br>
 
-<label>End</label>
+        <button type="submit">
+            Reserve
+        </button>
 
-<input
-type="datetime-local"
-id="end_time"
-required
->
-
-
-<button type="submit">
-Reserve
-</button>
-
-
-</form>
+    </form>
 
 </div>
 
+<hr>
+
+<h2>My Reservations</h2>
+
+<div id="reservationsList">
+    Loading reservations...
+</div>
 
 <script>
 
 const user_id = localStorage.getItem("user_id");
 
-
-if(!user_id){
+if (!user_id) {
 
     document.body.innerHTML = `
         <h1>You need to register first</h1>
@@ -63,144 +68,179 @@ if(!user_id){
 }
 
 
+async function loadParkingSpots() {
+    try {
+        const response = await fetch("/api/v1/GetFreeParkingSpot");
+        if (!response.ok) {
+            throw new Error("Failed to load parking spots");
+        }
 
-async function loadParkingSpots(){
+        const data = await response.json(); // Changed variable name to 'data' for clarity
+        console.log(data);
 
-    const response = await fetch(
-        "/api/v1/GetFreeParkingSpot"
-    );
+        const select = document.getElementById("parking_spot_id");
 
+        // Clear the "Loading spots..." placeholder option
+        select.innerHTML = '<option value="">-- Select a Spot --</option>';
 
-    const spots = await response.json();
-
-
-    console.log("spots from API:", spots);
-
-
-    const select = document.getElementById(
-        "parking_spot_id"
-    );
-
-
-    select.innerHTML = "";
-
-
-    spots.forEach(spot => {
-
-        const option = document.createElement(
-            "option"
-        );
-
-
-        // IMPORTANT
-        // Your ParkingSpot id is STRING
-        option.value = spot.id;
-
-
-        option.textContent =
-            spot.id;
+        // Access the array using data.parkingSpots
+        if (data.parkingSpots && Array.isArray(data.parkingSpots)) {
+            data.parkingSpots.forEach((spot) => {
+                const option = document.createElement("option");
+                option.value = String(spot.id);
+                option.text = String(spot.id);
+                select.add(option);
+            });
+        } else {
+            select.innerHTML = '<option value="">No spots available</option>';
+        }
+    } catch (err) {
+        console.error(err);
+        const select = document.getElementById("parking_spot_id");
+        select.innerHTML = '<option value="">Error loading spots</option>';
+    }
+}
 
 
-        select.appendChild(option);
+// Load user's reservations
+async function loadReservations() {
 
-    });
+    try {
 
+        const response = await fetch(`/api/v1/myReservation/${user_id}`);
 
-    console.log(
-        "selected spot:",
-        select.value
-    );
+        const reservations = await response.json();
+
+        const container = document.getElementById("reservationsList");
+
+        container.innerHTML = "";
+
+        if (reservations.length === 0) {
+
+            container.innerHTML = "<p>No reservations found.</p>";
+            return;
+
+        }
+
+        reservations.forEach(reservation => {
+
+            const div = document.createElement("div");
+
+            div.style.border = "1px solid black";
+            div.style.padding = "10px";
+            div.style.marginBottom = "10px";
+
+            div.innerHTML = `
+                <p><strong>ID:</strong> ${reservation.id}</p>
+                <p><strong>Parking Spot:</strong> ${reservation.parkingSpot.id}</p>
+                <p><strong>Start:</strong> ${new Date(reservation.start_time).toLocaleString()}</p>
+                <p><strong>End:</strong> ${new Date(reservation.end_time).toLocaleString()}</p>
+                <p><strong>Status:</strong> ${reservation.status}</p>
+            `;
+
+            if (reservation.status !== "CANCELLED") {
+
+                const cancelButton = document.createElement("button");
+
+                cancelButton.textContent = "Cancel Reservation";
+
+                cancelButton.addEventListener("click", async () => {
+
+                    const confirmCancel = confirm("Are you sure you want to cancel this reservation?");
+
+                    if (!confirmCancel) return;
+
+                    const response = await fetch(
+                        `/api/v1/CancelReservation/${reservation.id}`,
+                        {
+                            method: "PATCH"
+                        }
+                    );
+
+                    const data = await response.json();
+
+                    alert(data.message);
+
+                    if (response.ok) {
+
+                        loadReservations();
+
+                    }
+
+                });
+
+                div.appendChild(cancelButton);
+
+            }
+
+            container.appendChild(div);
+
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
 
 }
 
 
-loadParkingSpots();
-
-
-
-
 // Create reservation
-
 document
 .getElementById("reservationForm")
-.addEventListener("submit", async(e)=>{
-
+.addEventListener("submit", async (e) => {
 
     e.preventDefault();
-
-
-    const parkingSpot =
-        document.getElementById(
-            "parking_spot_id"
-        );
-
-
-    console.log(
-        "sending spot id:",
-        parkingSpot.value
-    );
-
 
     const response = await fetch(
         "/api/v1/CreateReservation",
         {
 
-        method:"POST",
+            method: "POST",
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+            headers: {
+                "Content-Type": "application/json"
+            },
 
+            body: JSON.stringify({
 
-        body:JSON.stringify({
+                user_id: Number(user_id),
 
-            user_id:Number(user_id),
+                parking_spot_id: document.getElementById("parking_spot_id").value,
 
+                start_time: document.getElementById("start_time").value,
 
-            parking_spot_id:
-                parkingSpot.value,
+                end_time: document.getElementById("end_time").value
 
-
-            start_time:
-            document.getElementById(
-                "start_time"
-            ).value,
-
-
-            end_time:
-            document.getElementById(
-                "end_time"
-            ).value
-
-        })
+            })
 
         }
     );
 
-
     const data = await response.json();
 
+    if (response.ok) {
 
-    console.log(data);
+        alert("Reservation created successfully!");
 
+        document.getElementById("reservationForm").reset();
 
-    if(response.ok){
+        loadReservations();
+        loadParkingSpots();
 
-        alert(
-            "Reservation created"
-        );
+    } else {
 
-    }else{
-
-        alert(
-            data.message
-        );
+        alert(data.message);
 
     }
 
-
 });
 
+
+// Initial load
+loadParkingSpots();
+loadReservations();
 
 </script>
 
