@@ -139,6 +139,49 @@ export class ReservationController {
     }
   }
 
+  static async CancelReservation(req: Request, res: Response) {
+    try {
+      const { reservationId } = req.params;
+      const now = new Date();
+
+      const reservation = await ReservationRepository.findOne({
+        where: { id: Number(reservationId) },
+      });
+
+      if (!reservation) {
+        return res.status(404).json({
+          message: "Reservation not found",
+        });
+      }
+
+      if (now >= reservation.end_time) {
+        return res.status(400).json({
+          message: "You cannot cancel a reservation that has already ended.",
+        });
+      }
+
+      if (reservation.status === ReservationStatus.CANCELLED) {
+            return res.status(400).json({
+              message: "Reservation has already been cancelled.",
+            });
+          }
+
+      reservation.status = ReservationStatus.CANCELLED;
+
+      await ReservationRepository.save(reservation);
+
+      return res.status(200).json({
+        message: "Reservation cancelled successfully.",
+        reservation,
+      });
+    } catch (error) {
+      return res.status(500).json({
+        message: "Failed to cancel reservation",
+        error,
+      });
+    }
+  }
+
 
 
 
