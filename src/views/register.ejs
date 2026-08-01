@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+</head>
+
+<body>
+
+<h1>Create Account</h1>
+
+<form id="registerForm">
+
+    <label>Name:</label>
+    <input
+        type="text"
+        id="name"
+        required
+    >
+
+    <button type="submit">
+        Register
+    </button>
+
+</form>
+
+
+<script>
+
+document.getElementById("registerForm")
+.addEventListener("submit", async (e)=>{
+
+    e.preventDefault();
+
+    const name = document.getElementById("name").value;
+
+
+    const response = await fetch(
+        "/api/v1/CreateUser",
+        {
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                name
+            })
+        }
+    );
+
+
+    const user = await response.json();
+
+
+    if(response.ok){
+
+        localStorage.setItem(
+            "user_id",
+            user.id
+        );
+
+        alert("Registered!");
+
+        window.location.href="/reservation";
+
+    }else{
+        alert(user.message);
+    }
+
+});
+
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Reservation</title>
+</head>
+
+<body>
+
+<h1>Create Reservation</h1>
+
+<div id="content">
+
+<form id="reservationForm">
+
+<label>Parking Spot</label>
+
+<select id="parking_spot_id" required>
+    <option value="">Loading spots...</option>
+</select>
+
+
+<label>Start</label>
+
+<input
+type="datetime-local"
+id="start_time"
+required
+>
+
+
+<label>End</label>
+
+<input
+type="datetime-local"
+id="end_time"
+required
+>
+
+
+<button type="submit">
+Reserve
+</button>
+
+
+</form>
+
+</div>
+
+
+<script>
+
+const user_id = localStorage.getItem("user_id");
+
+
+if(!user_id){
+
+    document.body.innerHTML = `
+        <h1>You need to register first</h1>
+        <a href="/register">Register</a>
+    `;
+
+    throw new Error("No user");
+}
+
+
+
+async function loadParkingSpots(){
+
+    const response = await fetch(
+        "/api/v1/GetFreeParkingSpot"
+    );
+
+
+    const spots = await response.json();
+
+
+    console.log("spots from API:", spots);
+
+
+    const select = document.getElementById(
+        "parking_spot_id"
+    );
+
+
+    select.innerHTML = "";
+
+
+    spots.forEach(spot => {
+
+        const option = document.createElement(
+            "option"
+        );
+
+
+        // IMPORTANT
+        // Your ParkingSpot id is STRING
+        option.value = spot.id;
+
+
+        option.textContent =
+            spot.id;
+
+
+        select.appendChild(option);
+
+    });
+
+
+    console.log(
+        "selected spot:",
+        select.value
+    );
+
+}
+
+
+loadParkingSpots();
+
+
+
+
+// Create reservation
+
+document
+.getElementById("reservationForm")
+.addEventListener("submit", async(e)=>{
+
+
+    e.preventDefault();
+
+
+    const parkingSpot =
+        document.getElementById(
+            "parking_spot_id"
+        );
+
+
+    console.log(
+        "sending spot id:",
+        parkingSpot.value
+    );
+
+
+    const response = await fetch(
+        "/api/v1/CreateReservation",
+        {
+
+        method:"POST",
+
+        headers:{
+            "Content-Type":"application/json"
+        },
+
+
+        body:JSON.stringify({
+
+            user_id:Number(user_id),
+
+
+            parking_spot_id:
+                parkingSpot.value,
+
+
+            start_time:
+            document.getElementById(
+                "start_time"
+            ).value,
+
+
+            end_time:
+            document.getElementById(
+                "end_time"
+            ).value
+
+        })
+
+        }
+    );
+
+
+    const data = await response.json();
+
+
+    console.log(data);
+
+
+    if(response.ok){
+
+        alert(
+            "Reservation created"
+        );
+
+    }else{
+
+        alert(
+            data.message
+        );
+
+    }
+
+
+});
+
+
+</script>
+
+</body>
+</html>

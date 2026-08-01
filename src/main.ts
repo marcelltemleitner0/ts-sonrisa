@@ -1,14 +1,29 @@
 import "reflect-metadata";
 
 import express from "express";
+import path from "path";
+
 import { AppDataSource } from "./database";
+
 import userRoutes from "./routers/userRoute";
-import parkingSpotRoutes from "./routers/parkingSpotRoute"
-import reservationRoutes from "./routers/reservationRoute"
+import parkingSpotRoutes from "./routers/parkingSpotRoute";
+import reservationRoutes from "./routers/reservationRoute";
+
+import pageRoutes from "./routers/pageRoute";
+
 
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/", pageRoutes);
+
+// EJS setup
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "../src/views"));
+
+// Static files (CSS, JS, images)
+app.use(express.static(path.join(__dirname, "../public")));
 
 // Routes
 app.use("/", userRoutes);
@@ -17,10 +32,11 @@ app.use("/", reservationRoutes);
 
 
 app.get("/", (req, res) => {
-    res.json({
-        status: "ok"
+    res.render("index", {
+        message: "Server is running"
     });
 });
+
 
 AppDataSource.initialize()
     .then(() => {
