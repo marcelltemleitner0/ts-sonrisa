@@ -2,8 +2,10 @@
   "scripts": {
     "dev": "nodemon --exec ts-node src/main.ts",
     "build": "tsc",
+    "db:seed": "typeorm-ts-node-commonjs query \"INSERT INTO parking_spot (id) VALUES ('A1'), ('A2'), ('A3'), ('B1'), ('B2'), ('B3'), ('C1'), ('C2') ON CONFLICT (id) DO NOTHING;\" -d src/database.ts",
     "start": "node dist/main.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "docker:pipeline": "npm run dev & npx wait-on tcp:3000 && npm run db:seed && npm run test && wait"
   },
   "dependencies": {
     "ejs": "^6.0.1",
