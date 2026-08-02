@@ -50,7 +50,7 @@ A foglalás elfogadhatóságát több szinten ellenőrzi a rendszer:
 
 A lemondás **soft delete**: a státusz `CANCELLED`-re vált, az adat megmarad az adatbázisban. A lemondott foglalások nem blokkolják az időintervallumot.
 
-### 3.4 Webes felület
+### 2.4 Webes felület
 
 Egyszerű EJS-alapú oldalak Tailwind CSS-sel:
 
@@ -63,7 +63,7 @@ Egyszerű EJS-alapú oldalak Tailwind CSS-sel:
 A felhasználó azonosítása `localStorage`-ban tárolt `user_id` alapján történik — nincs külön auth rendszer.
 
 
-## 5. Tesztelési stratégia
+## 3. Tesztelési stratégia
 
 | Típus | Eszköz | Mit fed le |
 |---|---|---|
@@ -72,7 +72,7 @@ A felhasználó azonosítása `localStorage`-ban tárolt `user_id` alapján tör
 
 Az integrációs tesztek külön `parking_db_test` adatbázist használnak.
 
-## 6. Korlátok
+## 4. Korlátok
 
 - Nincs járműtípus / korlátozott hely támogatás.
 - Nincs authentikáció — a `user_id` a kliens oldalon van tárolva.
