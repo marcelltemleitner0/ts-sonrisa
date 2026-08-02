@@ -1,5 +1,5 @@
 import request from "supertest";
-import app from "../../main";
+import app from "../../app";
 import { AppDataSource } from "../../database";
 import { describe, it, expect, beforeAll, afterEach, afterAll } from '@jest/globals';
 

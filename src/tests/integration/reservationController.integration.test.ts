@@ -1,5 +1,5 @@
 import request from "supertest";
-import app from "../../main";
+import app from "../../app";
 import { AppDataSource } from "../../database";
 import { Reservation, ReservationStatus } from "../../models/Reservation";
 import { ParkingSpot } from "../../models/ParkingSpot";
