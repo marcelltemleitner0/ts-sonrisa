@@ -1,244 +1,211 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" class="h-full bg-gray-50">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reservation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="min-h-full text-black antialiased bg-gray-50 font-sans py-12 px-4 sm:px-6 lg:px-8">
 
-<body>
+    <div class="max-w-4xl mx-auto space-y-12">
 
-<h1>Create Reservation</h1>
+        <header class="border-b border-black pb-6 flex flex-col md:flex-row justify-between items-start md:items-baseline gap-2">
+            <h1 class="text-3xl font-bold uppercase tracking-wider">Parking Management</h1>
+        </header>
 
-<div id="content">
+        <main class="grid grid-cols-1 md:grid-cols-5 gap-8 items-start">
 
-    <form id="reservationForm">
+            <section class="md:col-span-2 border border-black p-6 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-6">
+                <h2 class="text-lg font-bold uppercase tracking-wide border-b border-gray-200 pb-2 font-mono">Create Booking</h2>
 
-        <label>Parking Spot</label>
-        <select id="parking_spot_id" required>
-            <option value="">Loading spots...</option>
-        </select>
+                <form id="reservationForm" class="space-y-5">
+                    <div>
+                        <label for="parking_spot_id" class="block text-xs font-mono uppercase tracking-wider text-gray-700 font-bold mb-1.5">Parking Spot</label>
+                        <select id="parking_spot_id" required class="w-full bg-white px-3 py-2 border border-black rounded-none focus:outline-none focus:ring-1 focus:ring-black font-mono text-sm">
+                            <option value="">Loading spaces...</option>
+                        </select>
+                    </div>
 
-        <br><br>
+                    <div>
+                        <label for="start_time" class="block text-xs font-mono uppercase tracking-wider text-gray-700 font-bold mb-1.5">Start Window</label>
+                        <input type="datetime-local" id="start_time" required class="w-full px-3 py-2 border border-black rounded-none focus:outline-none focus:ring-1 focus:ring-black font-mono text-sm">
+                    </div>
 
-        <label>Start</label>
-        <input
-            type="datetime-local"
-            id="start_time"
-            required
-        >
+                    <div>
+                        <label for="end_time" class="block text-xs font-mono uppercase tracking-wider text-gray-700 font-bold mb-1.5">End Window</label>
+                        <input type="datetime-local" id="end_time" required class="w-full px-3 py-2 border border-black rounded-none focus:outline-none focus:ring-1 focus:ring-black font-mono text-sm">
+                    </div>
 
-        <br><br>
+                    <button type="submit" class="w-full bg-black text-white py-2.5 px-4 font-mono text-xs uppercase tracking-widest font-bold hover:bg-gray-900 active:bg-gray-800 focus:outline-none transition-colors">
+                        Reserve Slot
+                    </button>
+                </form>
+            </section>
 
-        <label>End</label>
-        <input
-            type="datetime-local"
-            id="end_time"
-            required
-        >
+            <section class="md:col-span-3 space-y-4">
+                <h2 class="text-lg font-bold uppercase tracking-wide border-b border-black pb-2 font-mono">My Active Schedule</h2>
+                <div id="reservationsList" class="space-y-4">
+                    <p class="text-sm font-mono text-gray-500 animate-pulse">Querying tracking logs...</p>
+                </div>
+            </section>
 
-        <br><br>
+        </main>
+    </div>
 
-        <button type="submit">
-            Reserve
-        </button>
+    <script>
+        const user_id = localStorage.getItem("user_id");
 
-    </form>
-
-</div>
-
-<hr>
-
-<h2>My Reservations</h2>
-
-<div id="reservationsList">
-    Loading reservations...
-</div>
-
-<script>
-
-const user_id = localStorage.getItem("user_id");
-
-if (!user_id) {
-
-    document.body.innerHTML = `
-        <h1>You need to register first</h1>
-        <a href="/register">Register</a>
-    `;
-
-    throw new Error("No user");
-}
-
-
-async function loadParkingSpots() {
-    try {
-        const response = await fetch("/api/v1/GetFreeParkingSpot");
-        if (!response.ok) {
-            throw new Error("Failed to load parking spots");
-        }
-
-        const data = await response.json();
-        console.log(data);
-
-        const select = document.getElementById("parking_spot_id");
-
-        select.innerHTML = '<option value="">-- Select a Spot --</option>';
-
-        if (data.parkingSpots && Array.isArray(data.parkingSpots)) {
-            data.parkingSpots.forEach((spot) => {
-                const option = document.createElement("option");
-                option.value = String(spot.id);
-                option.text = String(spot.id);
-                select.add(option);
-            });
-        } else {
-            select.innerHTML = '<option value="">No spots available</option>';
-        }
-    } catch (err) {
-        console.error(err);
-        const select = document.getElementById("parking_spot_id");
-        select.innerHTML = '<option value="">Error loading spots</option>';
-    }
-}
-
-
-
-async function loadReservations() {
-
-    try {
-
-        const response = await fetch(`/api/v1/myReservation/${user_id}`);
-
-        const reservations = await response.json();
-
-        const container = document.getElementById("reservationsList");
-
-        container.innerHTML = "";
-
-        if (reservations.length === 0) {
-
-            container.innerHTML = "<p>No reservations found.</p>";
-            return;
-
-        }
-
-        reservations.forEach(reservation => {
-
-            const div = document.createElement("div");
-
-            div.style.border = "1px solid black";
-            div.style.padding = "10px";
-            div.style.marginBottom = "10px";
-
-            div.innerHTML = `
-                <p><strong>ID:</strong> ${reservation.id}</p>
-                <p><strong>Parking Spot:</strong> ${reservation.parkingSpot.id}</p>
-                <p><strong>Start:</strong> ${new Date(reservation.start_time).toLocaleString()}</p>
-                <p><strong>End:</strong> ${new Date(reservation.end_time).toLocaleString()}</p>
-                <p><strong>Status:</strong> ${reservation.status}</p>
+        if (!user_id) {
+            document.body.className = "h-full flex flex-col items-center justify-center bg-white text-black antialiased px-4";
+            document.body.innerHTML = `
+                <div class="text-center max-w-sm border border-black p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] bg-white space-y-4">
+                    <h1 class="text-xl font-bold uppercase tracking-wider">Authentication Required</h1>
+                    <p class="text-sm text-gray-500 font-mono">No valid identifier session discovered locally.</p>
+                    <a href="/register" class="inline-block bg-black text-white px-6 py-2.5 font-mono text-xs uppercase tracking-widest font-bold hover:bg-gray-900 transition-colors">Go to Registration</a>
+                </div>
             `;
+            throw new Error("No authorized account context found.");
+        }
 
-            if (reservation.status !== "CANCELLED") {
+        async function loadParkingSpots() {
+            const select = document.getElementById("parking_spot_id");
+            try {
+                const response = await fetch("/api/v1/GetFreeParkingSpot");
+                if (!response.ok) throw new Error("Faulty network response");
 
-                const cancelButton = document.createElement("button");
+                const data = await response.json();
+                select.innerHTML = '<option value="">-- Select a Spot --</option>';
 
-                cancelButton.textContent = "Cancel Reservation";
+                if (data.parkingSpots && Array.isArray(data.parkingSpots) && data.parkingSpots.length > 0) {
+                    data.parkingSpots.forEach((spot) => {
+                        const option = document.createElement("option");
+                        option.value = String(spot.id);
+                        option.textContent = `Spot ${spot.id}`;
+                        select.add(option);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">No spots available</option>';
+                }
+            } catch (err) {
+                console.error(err);
+                select.innerHTML = '<option value="">Error loading spots</option>';
+            }
+        }
 
-                cancelButton.addEventListener("click", async () => {
+        async function loadReservations() {
+            const container = document.getElementById("reservationsList");
+            try {
+                const response = await fetch(`/api/v1/myReservation/${user_id}`);
+                const reservations = await response.json();
+                container.innerHTML = "";
 
-                    const confirmCancel = confirm("Are you sure you want to cancel this reservation?");
+                if (!reservations || reservations.length === 0) {
+                    container.innerHTML = `
+                        <div class="border border-dashed border-gray-300 p-6 text-center bg-white">
+                            <p class="text-sm font-mono text-gray-400 uppercase tracking-wide">No active reservations logs present</p>
+                        </div>
+                    `;
+                    return;
+                }
 
-                    if (!confirmCancel) return;
+                reservations.forEach(reservation => {
+                    const isCancelled = reservation.status === "CANCELLED";
+                    const item = document.createElement("div");
 
-                    const response = await fetch(
-                        `/api/v1/CancelReservation/${reservation.id}`,
-                        {
-                            method: "PATCH"
-                        }
-                    );
+                    item.className = `border p-5 bg-white transition-all duration-150 ${
+                        isCancelled ? "border-gray-200 opacity-60 bg-gray-50/50" : "border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                    }`;
 
-                    const data = await response.json();
+                    item.innerHTML = `
+                        <div class="flex justify-between items-start gap-4">
+                            <div class="space-y-1 text-sm">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-mono text-xs text-gray-400">#${reservation.id}</span>
+                                    <span class="font-mono uppercase px-2 py-0.5 text-[10px] font-bold tracking-wider ${
+                                        isCancelled ? "bg-gray-200 text-gray-600" : "bg-black text-white"
+                                    }">${reservation.status}</span>
+                                </div>
+                                <p class="text-base font-bold font-mono pt-1">Location: Spot ${reservation.parkingSpot.id}</p>
+                                <div class="pt-2 text-xs text-gray-600 space-y-0.5 font-mono">
+                                    <p><span class="uppercase tracking-wide inline-block w-12 text-gray-400">From:</span> ${new Date(reservation.start_time).toLocaleString()}</p>
+                                    <p><span class="uppercase tracking-wide inline-block w-12 text-gray-400">To:</span> ${new Date(reservation.end_time).toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
 
-                    alert(data.message);
+                    if (!isCancelled) {
+                        const btnContainer = document.createElement("div");
+                        btnContainer.className = "mt-4 pt-3 border-t border-gray-100 flex justify-end";
 
-                    if (response.ok) {
+                        const cancelButton = document.createElement("button");
+                        cancelButton.className = "border border-black text-black px-3 py-1.5 font-mono text-xs uppercase tracking-wide hover:bg-black hover:text-white transition-all";
+                        cancelButton.textContent = "Cancel Booking";
 
-                        loadReservations();
+                        cancelButton.addEventListener("click", async () => {
+                            if (!confirm("Are you sure you want to cancel this reservation?")) return;
 
+                            try {
+                                const patchRes = await fetch(`/api/v1/CancelReservation/${reservation.id}`, { method: "PATCH" });
+                                const data = await patchRes.json();
+                                alert(data.message);
+
+                                if (patchRes.ok) {
+                                    loadReservations();
+                                    loadParkingSpots();
+                                }
+                            } catch (error) {
+                                console.error(error);
+                                alert("Failed to communicate cancellation command.");
+                            }
+                        });
+
+                        btnContainer.appendChild(cancelButton);
+                        item.appendChild(btnContainer);
                     }
 
+                    container.appendChild(item);
+                });
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = '<p class="text-sm font-mono text-red-600 bg-red-50 p-3 border border-red-200">Error rendering booking schedule records.</p>';
+            }
+        }
+
+        document.getElementById("reservationForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            try {
+                const response = await fetch("/api/v1/CreateReservation", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        user_id: Number(user_id),
+                        parking_spot_id: document.getElementById("parking_spot_id").value,
+                        start_time: document.getElementById("start_time").value,
+                        end_time: document.getElementById("end_time").value
+                    })
                 });
 
-                div.appendChild(cancelButton);
+                const data = await response.json();
 
+                if (response.ok) {
+                    alert("Reservation created successfully!");
+                    document.getElementById("reservationForm").reset();
+                    loadReservations();
+                    loadParkingSpots();
+                } else {
+                    alert(data.message || "Failed to finalize scheduling conflict window.");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Network transaction failed processing allocation request.");
             }
-
-            container.appendChild(div);
-
         });
 
-    } catch (error) {
-
-        console.error(error);
-
-    }
-
-}
-
-
-document
-.getElementById("reservationForm")
-.addEventListener("submit", async (e) => {
-
-    e.preventDefault();
-
-    const response = await fetch(
-        "/api/v1/CreateReservation",
-        {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-
-                user_id: Number(user_id),
-
-                parking_spot_id: document.getElementById("parking_spot_id").value,
-
-                start_time: document.getElementById("start_time").value,
-
-                end_time: document.getElementById("end_time").value
-
-            })
-
-        }
-    );
-
-    const data = await response.json();
-
-    if (response.ok) {
-
-        alert("Reservation created successfully!");
-
-        document.getElementById("reservationForm").reset();
-
-        loadReservations();
         loadParkingSpots();
-
-    } else {
-
-        alert(data.message);
-
-    }
-
-});
-
-
-loadParkingSpots();
-loadReservations();
-
-</script>
-
+        loadReservations();
+    </script>
 </body>
 </html>
