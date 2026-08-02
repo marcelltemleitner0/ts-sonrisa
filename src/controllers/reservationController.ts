@@ -35,13 +35,19 @@ export class ReservationController {
 
       const start = new Date(start_time);
       const end = new Date(end_time);
-
+      const now = new Date();
 
 
       //Basic validation
       if (start >= end) {
         return res.status(400).json({
           message: "Start time must be before end time",
+        });
+      }
+
+      if (start < now) {
+        return res.status(400).json({
+          message: "Cannot create a reservation in the past",
         });
       }
 
