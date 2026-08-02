@@ -177,14 +177,26 @@
             e.preventDefault();
 
             try {
+                const startInput = document.getElementById("start_time").value;
+                const endInput = document.getElementById("end_time").value;
+                const startTime = new Date(startInput).toISOString();
+                const endTime = new Date(endInput).toISOString();
+
+                console.log("Sending:", {
+                    start_time: startTime,
+                    end_time: endTime
+                });
+
                 const response = await fetch("/api/v1/CreateReservation", {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
                     body: JSON.stringify({
                         user_id: Number(user_id),
                         parking_spot_id: document.getElementById("parking_spot_id").value,
-                        start_time: document.getElementById("start_time").value,
-                        end_time: document.getElementById("end_time").value
+                        start_time: startTime,
+                        end_time: endTime
                     })
                 });
 
@@ -196,11 +208,12 @@
                     loadReservations();
                     loadParkingSpots();
                 } else {
-                    alert(data.message || "Failed to finalize scheduling conflict window.");
+                    alert(data.message || "Failed to create reservation.");
                 }
+
             } catch (err) {
                 console.error(err);
-                alert("Network transaction failed processing allocation request.");
+                alert("Network error creating reservation.");
             }
         });
 
