@@ -141,6 +141,48 @@ describe("Reservation Controller Integration Tests", () => {
       expect(response.body.message).toBe("Reservation created successfully");
     });
 
+    it("should reject a reservation if the start time is in the past", async () => {
+      const userRepo = AppDataSource.getRepository(User);
+      const spotRepo = AppDataSource.getRepository(ParkingSpot);
+
+      const user = await userRepo.save(userRepo.create({ name: "John" }));
+      const spot = await spotRepo.save(spotRepo.create({ id: "A1" }));
+
+      const response = await request(app)
+        .post("/api/v1/CreateReservation")
+        .send({
+          user_id: user.id,
+          parking_spot_id: spot.id,
+          start_time: new Date(Date.now() - 60 * 60 * 1000),
+          end_time: new Date(Date.now() + 60 * 60 * 1000),
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("Cannot create a reservation in the past");
+    });
+
+    it("should reject a reservation if the start time is not before the end time", async () => {
+      const userRepo = AppDataSource.getRepository(User);
+      const spotRepo = AppDataSource.getRepository(ParkingSpot);
+
+      const user = await userRepo.save(userRepo.create({ name: "John" }));
+      const spot = await spotRepo.save(spotRepo.create({ id: "A1" }));
+
+      const startTime = new Date(Date.now() + 60 * 60 * 1000);
+
+      const response = await request(app)
+        .post("/api/v1/CreateReservation")
+        .send({
+          user_id: user.id,
+          parking_spot_id: spot.id,
+          start_time: startTime,
+          end_time: startTime,
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe("Start time must be before end time");
+    });
+
     it("should reject overlapping reservations", async () => {
       const userRepo = AppDataSource.getRepository(User);
       const spotRepo = AppDataSource.getRepository(ParkingSpot);
@@ -206,6 +248,23 @@ describe("Reservation Controller Integration Tests", () => {
 
       expect(response.status).toBe(404);
       expect(response.body.message).toBe("User does not exist");
+    });
+
+    it("should reject reservation when parking spot does not exist", async () => {
+      const userRepo = AppDataSource.getRepository(User);
+      const user = await userRepo.save(userRepo.create({ name: "John" }));
+
+      const response = await request(app)
+        .post("/api/v1/CreateReservation")
+        .send({
+          user_id: user.id,
+          parking_spot_id: "NON_EXISTENT_ID",
+          start_time: new Date(Date.now() + 60 * 1000),
+          end_time: new Date(Date.now() + 60 * 60 * 1000),
+        });
+
+      expect(response.status).toBe(404);
+      expect(response.body.message).toBe("Parking spot does not exist");
     });
   });
 
@@ -343,6 +402,34 @@ describe("Reservation Controller Integration Tests", () => {
       expect(response.status).toBe(400);
       expect(response.body.message).toBe(
         "Reservation has already been cancelled."
+      );
+    });
+
+    it("should reject cancelling a reservation that has already ended", async () => {
+      const userRepo = AppDataSource.getRepository(User);
+      const spotRepo = AppDataSource.getRepository(ParkingSpot);
+      const reservationRepo = AppDataSource.getRepository(Reservation);
+
+      const user = await userRepo.save(userRepo.create({ name: "John" }));
+      const spot = await spotRepo.save(spotRepo.create({ id: "A1" }));
+
+      const reservation = await reservationRepo.save(
+        reservationRepo.create({
+          user,
+          parkingSpot: spot,
+          start_time: new Date(Date.now() - 2 * 60 * 60 * 1000),
+          end_time: new Date(Date.now() - 60 * 60 * 1000),
+          status: ReservationStatus.APPROVED,
+        })
+      );
+
+      const response = await request(app).patch(
+        `/api/v1/CancelReservation/${reservation.id}`
+      );
+
+      expect(response.status).toBe(400);
+      expect(response.body.message).toBe(
+        "You cannot cancel a reservation that has already ended."
       );
     });
   });

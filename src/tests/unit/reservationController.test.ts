@@ -310,6 +310,27 @@ describe("ReservationController Extended Unit Tests", () => {
       });
     });
 
+    it("should return 400 if the start time is in the past", async () => {
+      const pastTime = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+      const futureTime = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+      req.body = {
+        user_id: 1,
+        parking_spot_id: 1,
+        start_time: pastTime,
+        end_time: futureTime,
+      };
+
+      await ReservationController.createReservation(req as Request, res as Response);
+
+
+      expect(status).toHaveBeenCalledWith(400);
+      expect(json).toHaveBeenCalledWith({
+        message: "Cannot create a reservation in the past",
+      });
+    });
+
+
     it("should rescue errors smoothly on failure pipeline gracefully through 500 response model", async () => {
       req = { params: { reservationId: "123" } };
       mockReservationRepository.findOne.mockRejectedValue(new Error("Disruption"));
