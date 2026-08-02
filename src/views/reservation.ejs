@@ -75,15 +75,13 @@ async function loadParkingSpots() {
             throw new Error("Failed to load parking spots");
         }
 
-        const data = await response.json(); // Changed variable name to 'data' for clarity
+        const data = await response.json();
         console.log(data);
 
         const select = document.getElementById("parking_spot_id");
 
-        // Clear the "Loading spots..." placeholder option
         select.innerHTML = '<option value="">-- Select a Spot --</option>';
 
-        // Access the array using data.parkingSpots
         if (data.parkingSpots && Array.isArray(data.parkingSpots)) {
             data.parkingSpots.forEach((spot) => {
                 const option = document.createElement("option");
@@ -102,7 +100,7 @@ async function loadParkingSpots() {
 }
 
 
-// Load user's reservations
+
 async function loadReservations() {
 
     try {
@@ -186,7 +184,6 @@ async function loadReservations() {
 }
 
 
-// Create reservation
 document
 .getElementById("reservationForm")
 .addEventListener("submit", async (e) => {
@@ -238,7 +235,6 @@ document
 });
 
 
-// Initial load
 loadParkingSpots();
 loadReservations();
 
