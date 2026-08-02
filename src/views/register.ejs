@@ -1,76 +1,68 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-white">
 <head>
     <meta charset="UTF-8">
-    <title>Register</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
+<body class="h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8 text-black antialiased">
+    <div class="w-full max-w-md space-y-8 border border-black p-8 sm:p-10 bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
 
-<body>
+        <div>
+            <h1 class="text-2xl font-bold uppercase tracking-wider text-center">Create Account</h1>
+        </div>
 
-<h1>Create Account</h1>
+        <form id="registerForm" class="mt-8 space-y-6">
+            <div>
+                <label for="name" class="block text-xs font-mono uppercase tracking-widest text-gray-700 font-bold mb-2">Name</label>
+                <input
+                    type="text"
+                    id="name"
+                    required
+                    autocomplete="name"
+                    placeholder="Enter an username"
+                    class="w-full px-3 py-2.5 border border-black rounded-none focus:outline-none focus:ring-1 focus:ring-black placeholder-gray-400 font-sans"
+                >
+            </div>
 
-<form id="registerForm">
+            <div>
+                <button
+                    type="submit"
+                    class="w-full bg-black text-white py-3 px-4 font-mono text-sm uppercase tracking-wider font-bold hover:bg-gray-900 active:bg-gray-800 focus:outline-none transition-all duration-150"
+                >
+                    Register
+                </button>
+            </div>
+        </form>
+    </div>
 
-    <label>Name:</label>
-    <input
-        type="text"
-        id="name"
-        required
-    >
+    <script>
+        document.getElementById("registerForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const name = document.getElementById("name").value;
 
-    <button type="submit">
-        Register
-    </button>
+            try {
+                const response = await fetch("/api/v1/CreateUser", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name })
+                });
 
-</form>
+                const user = await response.json();
 
-
-<script>
-
-document.getElementById("registerForm")
-.addEventListener("submit", async (e)=>{
-
-    e.preventDefault();
-
-    const name = document.getElementById("name").value;
-
-
-    const response = await fetch(
-        "/api/v1/CreateUser",
-        {
-            method:"POST",
-            headers:{
-                "Content-Type":"application/json"
-            },
-            body:JSON.stringify({
-                name
-            })
-        }
-    );
-
-
-    const user = await response.json();
-
-
-    if(response.ok){
-
-        localStorage.setItem(
-            "user_id",
-            user.id
-        );
-
-        alert("Registered!");
-
-        window.location.href="/reservation";
-
-    }else{
-        alert(user.message);
-    }
-
-});
-
-
-</script>
-
+                if (response.ok) {
+                    localStorage.setItem("user_id", user.id);
+                    alert("Registered successfully!");
+                    window.location.href = "/reservation";
+                } else {
+                    alert(user.message || "Registration failed");
+                }
+            } catch (err) {
+                console.error(err);
+                alert("A server error occurred.");
+            }
+        });
+    </script>
 </body>
 </html>
